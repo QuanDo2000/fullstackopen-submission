@@ -3,16 +3,28 @@ import personService from './services/persons';
 import Filter from './components/Filter';
 import PersonForm from './components/PersonForm';
 import Persons from './components/Persons';
+import Notification from './components/Notification';
+
+const showNotification = (message, error, setErrorMessage, setIsError) => {
+  setIsError(error);
+  setErrorMessage(message);
+  setTimeout(() => {
+    setErrorMessage(null);
+  }, 5000);
+};
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState('');
   const [newNumber, setNewNumber] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [errorMessage, setErrorMessage] = useState(null);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
     personService.getAll().then((initialPersons) => {
       setPersons(initialPersons);
+      setErrorMessage(null);
     });
   }, []);
 
@@ -36,7 +48,12 @@ const App = () => {
         (person) => person.name === newName && person.number === newNumber
       )
     ) {
-      alert(`${newName} is already added to phonebook`);
+      showNotification(
+        `${newName} is already added to phonebook`,
+        true,
+        setErrorMessage,
+        setIsError
+      );
       return;
     } else if (
       persons.some(
@@ -59,6 +76,21 @@ const App = () => {
             );
             setNewName('');
             setNewNumber('');
+            showNotification(
+              `${person.name} was updated`,
+              false,
+              setErrorMessage,
+              setIsError
+            );
+          })
+          .catch((error) => {
+            showNotification(
+              `${person.name} was already removed from server`,
+              true,
+              setErrorMessage,
+              setIsError
+            );
+            setPersons(persons.filter((p) => p.id !== person.id));
           });
       }
       return;
@@ -74,6 +106,12 @@ const App = () => {
       setPersons(persons.concat(returnedPerson));
       setNewName('');
       setNewNumber('');
+      showNotification(
+        `${newPerson.name} was added`,
+        false,
+        setErrorMessage,
+        setIsError
+      );
     });
   };
 
@@ -84,6 +122,12 @@ const App = () => {
     if (confirm) {
       personService.deletePerson(id).then(() => {
         setPersons(persons.filter((p) => p.id !== id));
+        showNotification(
+          `${person.name} was deleted`,
+          false,
+          setErrorMessage,
+          setIsError
+        );
       });
     }
   };
@@ -91,6 +135,7 @@ const App = () => {
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorMessage} error={isError} />
       <Filter filter={searchTerm} handleFilterChange={handleSearchChange} />
       <h2>Add a new</h2>
       <PersonForm
