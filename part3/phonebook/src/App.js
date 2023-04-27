@@ -22,10 +22,21 @@ const App = () => {
   const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    personService.getAll().then((initialPersons) => {
-      setPersons(initialPersons);
-      setErrorMessage(null);
-    });
+    personService
+      .getAll()
+      .then((initialPersons) => {
+        setPersons(initialPersons);
+        setErrorMessage(null);
+      })
+      .catch((error) => {
+        console.log(error.response.data.error);
+        showNotification(
+          'Could not fetch data from server',
+          true,
+          setErrorMessage,
+          setIsError
+        );
+      });
   }, []);
 
   const handleNameChange = (e) => {
@@ -85,12 +96,11 @@ const App = () => {
           })
           .catch((error) => {
             showNotification(
-              `${person.name} was already removed from server`,
+              `${error.response.data.error}`,
               true,
               setErrorMessage,
               setIsError
             );
-            setPersons(persons.filter((p) => p.id !== person.id));
           });
       }
       return;
@@ -102,17 +112,27 @@ const App = () => {
       id: persons.length + 1,
     };
 
-    personService.create(newPerson).then((returnedPerson) => {
-      setPersons(persons.concat(returnedPerson));
-      setNewName('');
-      setNewNumber('');
-      showNotification(
-        `${newPerson.name} was added`,
-        false,
-        setErrorMessage,
-        setIsError
-      );
-    });
+    personService
+      .create(newPerson)
+      .then((returnedPerson) => {
+        setPersons(persons.concat(returnedPerson));
+        setNewName('');
+        setNewNumber('');
+        showNotification(
+          `${newPerson.name} was added`,
+          false,
+          setErrorMessage,
+          setIsError
+        );
+      })
+      .catch((error) => {
+        showNotification(
+          `${error.response.data.error}`,
+          true,
+          setErrorMessage,
+          setIsError
+        );
+      });
   };
 
   const handleDeletePerson = (id) => {
@@ -120,15 +140,26 @@ const App = () => {
     const confirm = window.confirm(`Delete ${person.name}?`);
 
     if (confirm) {
-      personService.deletePerson(id).then(() => {
-        setPersons(persons.filter((p) => p.id !== id));
-        showNotification(
-          `${person.name} was deleted`,
-          false,
-          setErrorMessage,
-          setIsError
-        );
-      });
+      personService
+        .deletePerson(id)
+        .then(() => {
+          setPersons(persons.filter((p) => p.id !== id));
+          showNotification(
+            `${person.name} was deleted`,
+            false,
+            setErrorMessage,
+            setIsError
+          );
+        })
+        .catch((error) => {
+          showNotification(
+            `${person.name} was already deleted from server`,
+            true,
+            setErrorMessage,
+            setIsError
+          );
+          setPersons(persons.filter((p) => p.id !== id));
+        });
     }
   };
 
