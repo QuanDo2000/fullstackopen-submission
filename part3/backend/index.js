@@ -16,7 +16,6 @@ const requestLogger = (req, res, next) => {
   console.log('---');
   next();
 };
-
 app.use(requestLogger);
 
 app.get('/', (req, res) => {
