@@ -10,7 +10,8 @@
     "build:ui": "rm -rf build && cd ../notes && npm run build && cp -r build ../backend",
     "deploy": "fly deploy",
     "deploy:full": "npm run build:ui && npm run deploy",
-    "logs:prod": "fly logs"
+    "logs:prod": "fly logs",
+    "lint": "eslint ."
   },
   "author": "Quan Do",
   "license": "MIT",
@@ -21,6 +22,7 @@
     "mongoose": "^7.0.5"
   },
   "devDependencies": {
+    "eslint": "^8.39.0",
     "nodemon": "^2.0.22"
   }
 }

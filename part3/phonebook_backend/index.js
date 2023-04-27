@@ -11,7 +11,7 @@ app.use(cors());
 app.use(express.json());
 app.use(
   morgan('tiny', {
-    skip: (req, res) => {
+    skip: (req) => {
       return req.method === 'POST';
     },
   })
@@ -31,18 +31,18 @@ app.use(
       ].join(' ');
     },
     {
-      skip: (req, res) => {
+      skip: (req) => {
         return req.method !== 'POST';
       },
     }
   )
 );
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.send('<h1>Hello World!</h1>');
 });
 
-app.get('/info', (req, res) => {
+app.get('/info', (_req, res) => {
   const date = new Date();
 
   Person.find({}).then((persons) => {
@@ -52,7 +52,7 @@ app.get('/info', (req, res) => {
   });
 });
 
-app.get('/api/persons', (req, res) => {
+app.get('/api/persons', (_req, res) => {
   Person.find({}).then((persons) => {
     res.json(persons);
   });
@@ -96,7 +96,7 @@ app.get('/api/persons/:id', (req, res, next) => {
 
 app.delete('/api/persons/:id', (req, res, next) => {
   Person.findByIdAndDelete(req.params.id)
-    .then((result) => {
+    .then(() => {
       res.status(204).end();
     })
     .catch((error) => next(error));
@@ -120,7 +120,7 @@ app.put('/api/persons/:id', (req, res, next) => {
     .catch((error) => next(error));
 });
 
-const errorHandler = (error, req, res, next) => {
+const errorHandler = (error, _req, res, next) => {
   console.error(error.message);
 
   if (error.name === 'CastError') {
@@ -133,6 +133,7 @@ const errorHandler = (error, req, res, next) => {
 };
 app.use(errorHandler);
 
+// eslint-disable-next-line no-undef
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
