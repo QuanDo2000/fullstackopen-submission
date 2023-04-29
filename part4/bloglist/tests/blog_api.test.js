@@ -1,20 +1,26 @@
 const mongoose = require('mongoose');
+const bcrypt = require('bcrypt');
 const supertest = require('supertest');
 const helper = require('./test_helper');
 const app = require('../app');
 const api = supertest(app);
 
 const Blog = require('../models/blog');
-
-beforeEach(async () => {
-  await Blog.deleteMany({});
-
-  const blogObjects = helper.initialBlogs.map((blog) => new Blog(blog));
-  const promiseArray = blogObjects.map((blog) => blog.save());
-  await Promise.all(promiseArray);
-});
+const User = require('../models/user');
 
 describe('when there is initially some blogs saved', () => {
+  beforeEach(async () => {
+    await Blog.deleteMany({});
+    await User.deleteMany({});
+
+    const passwordHash = await bcrypt.hash('sekret', 10);
+    const user = new User({ username: 'root', passwordHash });
+    await user.save();
+    await Blog.insertMany(
+      helper.initialBlogs.map((blog) => ({ ...blog, user: user._id }))
+    );
+  });
+
   test('blogs are returned as json', async () => {
     await api
       .get('/api/blogs')
@@ -34,133 +40,209 @@ describe('when there is initially some blogs saved', () => {
     const contents = response.body.map((r) => r.title);
     expect(contents).toContain('Browser can execute only Javascript');
   });
-});
 
-describe('addition of a new blog', () => {
-  test('succeeds with valid data', async () => {
-    const newBlog = {
-      title: 'async/await simplifies making async calls',
-      author: 'Name 3',
-      url: 'name3.com',
-      likes: 3,
-    };
+  describe('addition of a new blog', () => {
+    test('succeeds with valid data', async () => {
+      const newBlog = {
+        title: 'async/await simplifies making async calls',
+        author: 'Name 3',
+        url: 'name3.com',
+        likes: 3,
+      };
 
-    await api
-      .post('/api/blogs')
-      .send(newBlog)
-      .expect(201)
-      .expect('Content-Type', /application\/json/);
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
 
-    const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
+      await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .send(newBlog)
+        .expect(201)
+        .expect('Content-Type', /application\/json/);
 
-    const contents = blogsAtEnd.map((r) => r.title);
-    expect(contents).toContain('async/await simplifies making async calls');
-  });
-});
+      const blogsAtEnd = await helper.blogsInDb();
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length + 1);
 
-describe('blog with missing properties', () => {
-  test('blog has id property', async () => {
-    const response = await api.get('/api/blogs');
+      const contents = blogsAtEnd.map((r) => r.title);
+      expect(contents).toContain('async/await simplifies making async calls');
+    });
 
-    expect(response.body[0].id).toBeDefined();
-  });
+    test('fails with status code 401 if token is not provided', async () => {
+      const newBlog = {
+        title: 'async/await simplifies making async calls',
+        author: 'Name 3',
+        url: 'name3.com',
+        likes: 3,
+      };
 
-  test('a blog without likes property will default to 0 likes', async () => {
-    const newBlog = {
-      title: 'async/await simplifies making async calls',
-      author: 'Name 3',
-      url: 'name3.com',
-    };
+      await api.post('/api/blogs').send(newBlog).expect(401);
 
-    await api.post('/api/blogs').send(newBlog);
+      const blogsAtEnd = await helper.blogsInDb();
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
 
-    const blogsAtEnd = await helper.blogsInDb();
-    const addedBlog = blogsAtEnd.find((blog) => blog.title === newBlog.title);
-    expect(addedBlog.likes).toBe(0);
-  });
-
-  test('a blog without title and url properties will return 400 Bad Request', async () => {
-    const newBlog = {
-      author: 'Name 3',
-      likes: 3,
-    };
-
-    await api.post('/api/blogs').send(newBlog).expect(400);
+      const contents = blogsAtEnd.map((r) => r.title);
+      expect(contents).not.toContain(
+        'async/await simplifies making async calls'
+      );
+    });
   });
 
-  test('a blog without title property will return 400 Bad Request', async () => {
-    const newBlog = {
-      author: 'Name 3',
-      url: 'name3.com',
-      likes: 3,
-    };
+  describe('blog with missing properties', () => {
+    test('blog has id property', async () => {
+      const response = await api.get('/api/blogs');
 
-    await api.post('/api/blogs').send(newBlog).expect(400);
+      expect(response.body[0].id).toBeDefined();
+    });
+
+    test('a blog without likes property will default to 0 likes', async () => {
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
+
+      const newBlog = {
+        title: 'async/await simplifies making async calls',
+        author: 'Name 3',
+        url: 'name3.com',
+      };
+
+      await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .send(newBlog);
+
+      const blogsAtEnd = await helper.blogsInDb();
+      const addedBlog = blogsAtEnd.find((blog) => blog.title === newBlog.title);
+      expect(addedBlog.likes).toBe(0);
+    });
+
+    test('a blog without title and url properties will return 400 Bad Request', async () => {
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
+
+      const newBlog = {
+        author: 'Name 3',
+        likes: 3,
+      };
+
+      await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .send(newBlog)
+        .expect(400);
+    });
+
+    test('a blog without title property will return 400 Bad Request', async () => {
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
+
+      const newBlog = {
+        author: 'Name 3',
+        url: 'name3.com',
+        likes: 3,
+      };
+
+      await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .send(newBlog)
+        .expect(400);
+    });
+
+    test('a blog without url property will return 400 Bad Request', async () => {
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
+
+      const newBlog = {
+        title: 'async/await simplifies making async calls',
+        author: 'Name 3',
+        likes: 3,
+      };
+
+      await api
+        .post('/api/blogs')
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .send(newBlog)
+        .expect(400);
+    });
   });
 
-  test('a blog without url property will return 400 Bad Request', async () => {
-    const newBlog = {
-      title: 'async/await simplifies making async calls',
-      author: 'Name 3',
-      likes: 3,
-    };
+  describe('deletion of a blog', () => {
+    test('succeeds with status code 204 if id is valid', async () => {
+      const blogsAtStart = await helper.blogsInDb();
+      const blogToDelete = blogsAtStart[0];
 
-    await api.post('/api/blogs').send(newBlog).expect(400);
-  });
-});
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
 
-describe('deletion of a blog', () => {
-  test('succeeds with status code 204 if id is valid', async () => {
-    const blogsAtStart = await helper.blogsInDb();
-    const blogToDelete = blogsAtStart[0];
+      await api
+        .delete(`/api/blogs/${blogToDelete.id}`)
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .expect(204);
 
-    await api.delete(`/api/blogs/${blogToDelete.id}`).expect(204);
+      const blogsAtEnd = await helper.blogsInDb();
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
 
-    const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length - 1);
+      const contents = blogsAtEnd.map((r) => r.title);
+      expect(contents).not.toContain(blogToDelete.title);
+    });
 
-    const contents = blogsAtEnd.map((r) => r.title);
-    expect(contents).not.toContain(blogToDelete.title);
-  });
+    test('fails with status code 400 if id is invalid', async () => {
+      const invalidId = '5a3d5da59070081a82a3445';
 
-  test('fails with status code 400 if id is invalid', async () => {
-    const invalidId = '5a3d5da59070081a82a3445';
+      const account = await api
+        .post('/api/login')
+        .send({ username: 'root', password: 'sekret' });
 
-    await api.delete(`/api/blogs/${invalidId}`).expect(400);
-  });
-});
+      await api
+        .delete(`/api/blogs/${invalidId}`)
+        .set('Authorization', `Bearer ${account.body.token}`)
+        .expect(400);
+    });
 
-describe('updating a blog', () => {
-  test('succeeds with status code 200 if id is valid', async () => {
-    const blogsAtStart = await helper.blogsInDb();
-    const blogToUpdate = blogsAtStart[0];
+    test('fails with status code 401 if token is not provided', async () => {
+      const blogsAtStart = await helper.blogsInDb();
+      const blogToDelete = blogsAtStart[0];
 
-    const updatedBlog = {
-      title: blogToUpdate.title,
-      author: blogToUpdate.author,
-      url: blogToUpdate.url,
-      likes: blogToUpdate.likes + 1,
-    };
-
-    await api
-      .put(`/api/blogs/${blogToUpdate.id}`)
-      .send(updatedBlog)
-      .expect(200);
-
-    const blogsAtEnd = await helper.blogsInDb();
-    expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
-
-    const updatedBlogInDb = blogsAtEnd.find(
-      (blog) => blog.title === blogToUpdate.title
-    );
-    expect(updatedBlogInDb.likes).toBe(blogToUpdate.likes + 1);
+      await api.delete(`/api/blogs/${blogToDelete.id}`).expect(401);
+    });
   });
 
-  test('fails with status code 400 if id is invalid', async () => {
-    const invalidId = '5a3d5da59070081a82a3445';
+  describe('updating a blog', () => {
+    test('succeeds with status code 200 if id is valid', async () => {
+      const blogsAtStart = await helper.blogsInDb();
+      const blogToUpdate = blogsAtStart[0];
 
-    await api.put(`/api/blogs/${invalidId}`).send({}).expect(400);
+      const updatedBlog = {
+        title: blogToUpdate.title,
+        author: blogToUpdate.author,
+        url: blogToUpdate.url,
+        likes: blogToUpdate.likes + 1,
+      };
+
+      await api
+        .put(`/api/blogs/${blogToUpdate.id}`)
+        .send(updatedBlog)
+        .expect(200);
+
+      const blogsAtEnd = await helper.blogsInDb();
+      expect(blogsAtEnd).toHaveLength(helper.initialBlogs.length);
+
+      const updatedBlogInDb = blogsAtEnd.find(
+        (blog) => blog.title === blogToUpdate.title
+      );
+      expect(updatedBlogInDb.likes).toBe(blogToUpdate.likes + 1);
+    });
+
+    test('fails with status code 400 if id is invalid', async () => {
+      const invalidId = '5a3d5da59070081a82a3445';
+
+      await api.put(`/api/blogs/${invalidId}`).send({}).expect(400);
+    });
   });
 });
 
