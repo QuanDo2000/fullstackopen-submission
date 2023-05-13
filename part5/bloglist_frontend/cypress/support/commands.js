@@ -28,20 +28,20 @@ Cypress.Commands.add('login', ({ username, password }) => {
   cy.request('POST', `${Cypress.env('BACKEND')}/login`, {
     username,
     password,
-  }).then(({ body }) => {
-    localStorage.setItem('loggedNoteappUser', JSON.stringify(body));
+  }).then((response) => {
+    localStorage.setItem('loggedBlogappUser', JSON.stringify(response.body));
     cy.visit('');
   });
 });
 
-Cypress.Commands.add('createNote', ({ content, important }) => {
+Cypress.Commands.add('createBlog', ({ title, author, url, likes }) => {
   cy.request({
-    url: `${Cypress.env('BACKEND')}/notes`,
+    url: `${Cypress.env('BACKEND')}/blogs`,
     method: 'POST',
-    body: { content, important },
+    body: { title, author, url, likes },
     headers: {
       Authorization: `Bearer ${
-        JSON.parse(localStorage.getItem('loggedNoteappUser')).token
+        JSON.parse(localStorage.getItem('loggedBlogappUser')).token
       }`,
     },
   });

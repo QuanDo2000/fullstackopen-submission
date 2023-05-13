@@ -125,12 +125,14 @@ const App = () => {
           </Togglable>
 
           {sortedBlogs.map((blog) => (
-            <Blog
-              key={blog.id}
-              blog={blog}
-              likeBlog={likeBlog}
-              removeBlog={removeBlog}
-            />
+            <div className="blog" key={blog.id}>
+              <Blog
+                key={blog.id}
+                blog={blog}
+                likeBlog={likeBlog}
+                removeBlog={removeBlog}
+              />
+            </div>
           ))}
         </div>
       )}
