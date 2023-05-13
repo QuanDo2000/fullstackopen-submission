@@ -41,13 +41,22 @@ const App = () => {
   const addBlog = (blogObject) => {
     blogFormRef.current.toggleVisibility();
     blogService.create(blogObject).then((returnedBlog) => {
-      blogService.getAll().then((blogs) => setBlogs(blogs));
+      setBlogs(blogs.concat(returnedBlog));
       showNotification(
         `a new blog ${returnedBlog.title} by ${returnedBlog.author} added`,
         false,
         setErrorMessage,
         setIsError
       );
+    });
+  };
+
+  const likeBlog = (blogObject) => {
+    blogService.update(blogObject.id, blogObject).then((returnedBlog) => {
+      const updatedBlogs = blogs.map((blog) =>
+        blog.id !== blogObject.id ? blog : returnedBlog
+      );
+      setBlogs(updatedBlogs);
     });
   };
 
@@ -97,7 +106,7 @@ const App = () => {
           </Togglable>
 
           {blogs.map((blog) => (
-            <Blog key={blog.id} blog={blog} />
+            <Blog key={blog.id} blog={blog} likeBlog={likeBlog} />
           ))}
         </div>
       )}
