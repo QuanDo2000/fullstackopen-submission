@@ -60,6 +60,23 @@ const App = () => {
     });
   };
 
+  const removeBlog = (blogObject) => {
+    if (
+      window.confirm(`Remove blog ${blogObject.title} by ${blogObject.author}`)
+    ) {
+      blogService.remove(blogObject.id).then(() => {
+        const updatedBlogs = blogs.filter((blog) => blog.id !== blogObject.id);
+        setBlogs(updatedBlogs);
+        showNotification(
+          `Blog ${blogObject.title} by ${blogObject.author} removed`,
+          false,
+          setErrorMessage,
+          setIsError
+        );
+      });
+    }
+  };
+
   const handleLogin = async (event) => {
     event.preventDefault();
     try {
@@ -108,7 +125,12 @@ const App = () => {
           </Togglable>
 
           {sortedBlogs.map((blog) => (
-            <Blog key={blog.id} blog={blog} likeBlog={likeBlog} />
+            <Blog
+              key={blog.id}
+              blog={blog}
+              likeBlog={likeBlog}
+              removeBlog={removeBlog}
+            />
           ))}
         </div>
       )}
