@@ -7,7 +7,6 @@ import {
   Route,
   Link,
   Navigate,
-  useParams,
   useNavigate,
   useMatch,
 } from 'react-router-dom';
@@ -91,7 +90,7 @@ const Login = (props) => {
 };
 
 const App = () => {
-  const [notes, setNotes] = useState([
+  const [notes] = useState([
     {
       id: 1,
       content: 'HTML is easy',
