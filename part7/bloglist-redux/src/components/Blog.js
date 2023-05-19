@@ -1,6 +1,11 @@
 import { useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { setNotification } from '../reducers/notificationReducer';
+import { likeBlog, deleteBlog } from '../reducers/blogReducer';
 
-const Blog = ({ blog, likeBlog, removeBlog }) => {
+const Blog = ({ blog }) => {
+  const dispatch = useDispatch();
+
   const blogStyle = {
     paddingTop: 10,
     paddingLeft: 2,
@@ -9,19 +14,28 @@ const Blog = ({ blog, likeBlog, removeBlog }) => {
     marginBottom: 5,
   };
 
-  const user = JSON.parse(window.localStorage.getItem('loggedBlogappUser'));
+  const user = useSelector((state) => state.user);
 
   const [visible, setVisible] = useState(false);
 
   const handleLike = () => {
-    likeBlog({
-      ...blog,
-      likes: blog.likes + 1,
-    });
+    dispatch(
+      likeBlog({
+        ...blog,
+        likes: blog.likes + 1,
+      })
+    );
+
+    dispatch(setNotification(`Blog ${blog.title} by ${blog.author} liked`, 2));
   };
 
   const handleRemove = () => {
-    removeBlog(blog);
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
+      dispatch(deleteBlog(blog));
+      dispatch(
+        setNotification(`Blog ${blog.title} by ${blog.author} removed`, 5)
+      );
+    }
   };
 
   return (
