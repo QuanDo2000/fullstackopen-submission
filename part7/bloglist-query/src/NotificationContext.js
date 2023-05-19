@@ -33,4 +33,16 @@ export const useNotificationDispatch = () => {
   return notificationAndDispatch[1];
 };
 
+export const showNotification = (dispatch, message, error, timeout) => {
+  dispatch({
+    type: 'SET_NOTIFICATION',
+    data: { message, error },
+  });
+  setTimeout(() => {
+    dispatch({
+      type: 'CLEAR_NOTIFICATION',
+    });
+  }, timeout * 1000);
+};
+
 export default NotificationContext;

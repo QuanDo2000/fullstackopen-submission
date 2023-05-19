@@ -1,6 +1,13 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
 
-const Blog = ({ blog, likeBlog, removeBlog }) => {
+import blogService from '../services/blogs';
+import {
+  showNotification,
+  useNotificationDispatch,
+} from '../NotificationContext';
+
+const Blog = ({ blog }) => {
   const blogStyle = {
     paddingTop: 10,
     paddingLeft: 2,
@@ -9,19 +16,46 @@ const Blog = ({ blog, likeBlog, removeBlog }) => {
     marginBottom: 5,
   };
 
+  const queryClient = useQueryClient();
+  const dispatch = useNotificationDispatch();
+
+  const updateBlogMutation = useMutation(blogService.update, {
+    onSuccess: (newBlog) => {
+      const blogs = queryClient.getQueryData('blogs');
+      queryClient.setQueryData(
+        'blogs',
+        blogs.map((blog) => (blog.id !== newBlog.id ? blog : newBlog))
+      );
+    },
+  });
+
+  const removeBlogMutation = useMutation(blogService.remove, {
+    onSuccess: () => {
+      queryClient.invalidateQueries('blogs');
+    },
+  });
+
   const user = JSON.parse(window.localStorage.getItem('loggedBlogappUser'));
 
   const [visible, setVisible] = useState(false);
 
   const handleLike = () => {
-    likeBlog({
+    updateBlogMutation.mutate({
       ...blog,
       likes: blog.likes + 1,
     });
   };
 
   const handleRemove = () => {
-    removeBlog(blog);
+    if (window.confirm(`Remove blog ${blog.title} by ${blog.author}`)) {
+      removeBlogMutation.mutate(blog.id);
+      showNotification(
+        dispatch,
+        `Blog ${blog.title} by ${blog.author} removed`,
+        false,
+        5
+      );
+    }
   };
 
   return (

@@ -1,13 +1,36 @@
 import { useState } from 'react';
+import { useMutation, useQueryClient } from 'react-query';
+import blogService from '../services/blogs';
+import {
+  showNotification,
+  useNotificationDispatch,
+} from '../NotificationContext';
 
-const BlogForm = ({ createBlog }) => {
+const BlogForm = ({ togglableRef }) => {
+  const queryClient = useQueryClient();
+  const dispatch = useNotificationDispatch();
+
   const [newBlog, setNewBlog] = useState('');
   const [newAuthor, setNewAuthor] = useState('');
   const [newUrl, setNewUrl] = useState('');
 
+  const createBlogMutation = useMutation(blogService.create, {
+    onSuccess: (newBlog) => {
+      const blogs = queryClient.getQueryData('blogs');
+      queryClient.setQueryData('blogs', [...blogs, newBlog]);
+      showNotification(
+        dispatch,
+        `Blog ${newBlog.title} by ${newBlog.author} created successfully`,
+        false,
+        5
+      );
+    },
+  });
+
   const addBlog = (event) => {
     event.preventDefault();
-    createBlog({
+    togglableRef.current.toggleVisibility();
+    createBlogMutation.mutate({
       title: newBlog,
       author: newAuthor,
       url: newUrl,
