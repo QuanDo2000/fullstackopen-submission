@@ -1,6 +1,9 @@
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useMatch, useNavigate } from 'react-router-dom';
-import { deleteBlog, likeBlog } from '../reducers/blogReducer';
+import { Button, Form, Row, Col, ListGroup } from 'react-bootstrap';
+
+import { addComment, deleteBlog, likeBlog } from '../reducers/blogReducer';
 import {
   setErrorNotification,
   setNotification,
@@ -9,6 +12,8 @@ import {
 const BlogView = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const [comment, setComment] = useState('');
 
   const blogs = useSelector((state) => state.blogs);
   const user = useSelector((state) => state.user);
@@ -42,6 +47,18 @@ const BlogView = () => {
     }
   };
 
+  const handleComment = () => {
+    if (comment === '') {
+      return;
+    }
+
+    dispatch(addComment(blog, comment))
+      .then(dispatch(setNotification(`Comment ${comment} added`, 5)))
+      .catch((error) => {
+        dispatch(setErrorNotification(error.response.data.error, 5));
+      });
+  };
+
   if (!blog) {
     return null;
   }
@@ -53,15 +70,43 @@ const BlogView = () => {
         <a>{blog.url}</a>
       </div>
       <div>
-        {blog.likes} likes <button onClick={handleLike}>like</button>
+        {blog.likes} likes{' '}
+        <Button size="sm" onClick={handleLike}>
+          like
+        </Button>
       </div>
       <div>added by {blog.user ? blog.user.name : 'Undefined'}</div>
       {blog.user &&
       user &&
       blog.user.username === user.username &&
       blog.user.name === user.name ? (
-        <button onClick={handleRemove}>remove</button>
+        <Button onClick={handleRemove}>remove</Button>
       ) : null}
+
+      <h3>Comments</h3>
+      <Form>
+        <Form.Group as={Row} controlId="comment">
+          <Col sm={5}>
+            <Form.Control
+              type="text"
+              name="comment"
+              value={comment}
+              onChange={({ target }) => setComment(target.value)}
+            />
+          </Col>
+          <Col sm={2}>
+            <Button onClick={handleComment}>add comment</Button>
+          </Col>
+        </Form.Group>
+      </Form>
+      <br />
+      <ListGroup>
+        <Col sm={7}>
+          {blog.comments.map((comment, index) => (
+            <ListGroup.Item key={index}>{comment}</ListGroup.Item>
+          ))}
+        </Col>
+      </ListGroup>
     </div>
   );
 };

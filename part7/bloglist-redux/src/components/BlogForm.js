@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { Form, Button } from 'react-bootstrap';
 
 import {
   setErrorNotification,
@@ -43,38 +44,34 @@ const BlogForm = ({ togglableRef }) => {
   return (
     <div>
       <h2>Create New</h2>
-      <form onSubmit={addBlog}>
-        <div>
-          title:
-          <input
+      <Form onSubmit={addBlog}>
+        <Form.Group>
+          <Form.Label>title:</Form.Label>
+          <Form.Control
             id="title"
             value={newBlog}
             onChange={({ target }) => setNewBlog(target.value)}
             placeholder="enter title here"
           />
-        </div>
-        <div>
-          author:
-          <input
+          <Form.Label>author:</Form.Label>
+          <Form.Control
             id="author"
             value={newAuthor}
             onChange={({ target }) => setNewAuthor(target.value)}
             placeholder="enter author here"
           />
-        </div>
-        <div>
-          url:
-          <input
+          <Form.Label>url:</Form.Label>
+          <Form.Control
             id="url"
             value={newUrl}
             onChange={({ target }) => setNewUrl(target.value)}
             placeholder="enter url here"
           />
-        </div>
-        <button id="create-button" type="submit">
-          create
-        </button>
-      </form>
+          <Button id="create-button" type="submit">
+            create
+          </Button>
+        </Form.Group>
+      </Form>
     </div>
   );
 };

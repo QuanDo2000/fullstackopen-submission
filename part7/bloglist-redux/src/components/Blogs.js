@@ -1,10 +1,21 @@
-import { useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useSelector } from 'react-redux';
+import { Link, useNavigate } from 'react-router-dom';
+import { Table } from 'react-bootstrap';
+
 import Togglable from './Togglable';
 import BlogForm from './BlogForm';
-import { Link } from 'react-router-dom';
 
 const Blogs = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = JSON.parse(window.localStorage.getItem('loggedBlogappUser'));
+    if (!user) {
+      navigate('/login');
+    }
+  });
+
   const blogs = useSelector((state) => {
     return state.blogs.toSorted((a, b) => b.likes - a.likes);
   });
@@ -13,19 +24,26 @@ const Blogs = () => {
 
   return (
     <div>
-      <h2>blogs</h2>
+      <h2>Blogs</h2>
 
       <Togglable buttonLabel="new blog" ref={blogFormRef}>
         <BlogForm togglableRef={blogFormRef} />
       </Togglable>
-
-      {blogs.map((blog) => (
-        <div className="blog" key={blog.id}>
-          <Link to={`/blogs/${blog.id}`}>
-            {blog.title} {blog.author}
-          </Link>
-        </div>
-      ))}
+      <br />
+      <Table striped>
+        <tbody>
+          {blogs.map((blog) => (
+            <tr key={blog.id}>
+              <td>
+                <Link to={`/blogs/${blog.id}`}>{blog.title}</Link>
+              </td>
+              <td>
+                <Link to={`/users/${blog.user.id}`}>{blog.user.name}</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </Table>
     </div>
   );
 };

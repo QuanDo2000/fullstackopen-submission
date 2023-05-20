@@ -1,9 +1,19 @@
+import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Table } from 'react-bootstrap';
 
 const UsersView = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const user = JSON.parse(window.localStorage.getItem('loggedBlogappUser'));
+    if (!user) {
+      navigate('/login');
+    }
+  });
+
   const users = useSelector((state) => state.users);
-  console.log(users);
 
   if (!users) {
     return null;
@@ -15,11 +25,11 @@ const UsersView = () => {
     <div>
       <h2>Users</h2>
 
-      <table>
+      <Table striped>
         <thead>
           <tr>
             <th></th>
-            <th>blogs created</th>
+            <th>Blogs created</th>
           </tr>
         </thead>
         <tbody>
@@ -32,7 +42,7 @@ const UsersView = () => {
             </tr>
           ))}
         </tbody>
-      </table>
+      </Table>
     </div>
   );
 };
