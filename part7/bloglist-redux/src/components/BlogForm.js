@@ -1,6 +1,10 @@
 import { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { setNotification } from '../reducers/notificationReducer';
+
+import {
+  setErrorNotification,
+  setNotification,
+} from '../reducers/notificationReducer';
 import { createBlog } from '../reducers/blogReducer';
 
 const BlogForm = ({ togglableRef }) => {
@@ -18,14 +22,22 @@ const BlogForm = ({ togglableRef }) => {
         author: newAuthor,
         url: newUrl,
       })
-    );
+    )
+      .then(() => {
+        togglableRef.current.toggleVisibility();
+        dispatch(
+          setNotification(`a new blog ${newBlog} by ${newAuthor} added`, 5)
+        );
 
-    togglableRef.current.toggleVisibility();
-    dispatch(setNotification(`a new blog ${newBlog} by ${newAuthor} added`, 5));
+        setNewBlog('');
+        setNewAuthor('');
+        setNewUrl('');
+      })
+      .catch((error) => {
+        console.log(error);
 
-    setNewBlog('');
-    setNewAuthor('');
-    setNewUrl('');
+        dispatch(setErrorNotification('Error creating blog', 5));
+      });
   };
 
   return (

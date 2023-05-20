@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 import loginService from '../services/login';
 import blogService from '../services/blogs';
@@ -8,10 +9,18 @@ import { setUser } from '../reducers/userReducer';
 import { setErrorNotification } from '../reducers/notificationReducer';
 
 const LoginForm = () => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    const user = JSON.parse(window.localStorage.getItem('loggedBlogappUser'));
+    if (user) {
+      navigate('/blogs');
+    }
+  }, []);
 
   const handleLogin = async (event) => {
     event.preventDefault();
@@ -22,6 +31,7 @@ const LoginForm = () => {
       dispatch(setUser(user));
       setUsername('');
       setPassword('');
+      navigate('/blogs');
     } catch (exception) {
       dispatch(setErrorNotification('Wrong credentials', 5));
     }

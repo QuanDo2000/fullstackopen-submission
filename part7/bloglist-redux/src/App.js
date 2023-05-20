@@ -1,13 +1,18 @@
-import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { Route, Routes } from 'react-router-dom';
+
 import { initializeBlogs } from './reducers/blogReducer';
-import { initializeUser, removeUser } from './reducers/userReducer';
+import { initializeUser } from './reducers/userReducer';
 
 import Notification from './components/Notification';
-import Blog from './components/Blog';
 import LoginForm from './components/LoginForm';
-import Togglable from './components/Togglable';
-import BlogForm from './components/BlogForm';
+import Blogs from './components/Blogs';
+import UsersView from './components/UsersView';
+import Nav from './components/Nav';
+import { initializeUsers } from './reducers/usersReducer';
+import UserView from './components/UserView';
+import BlogView from './components/BlogView';
 
 const App = () => {
   const dispatch = useDispatch();
@@ -15,47 +20,22 @@ const App = () => {
   useEffect(() => {
     dispatch(initializeBlogs());
     dispatch(initializeUser());
+    dispatch(initializeUsers());
   }, [dispatch]);
-
-  const blogs = useSelector((state) => {
-    return state.blogs.toSorted((a, b) => b.likes - a.likes);
-  });
-  const user = useSelector((state) => state.user);
-
-  const blogFormRef = useRef();
 
   return (
     <div>
+      <Nav />
       <h1>BlogList App</h1>
       <Notification />
-      {user === null ? (
-        <LoginForm />
-      ) : (
-        <div>
-          <h2>blogs</h2>
-          <p>
-            {user.name} logged in
-            <button
-              onClick={() => {
-                window.localStorage.removeItem('loggedBlogappUser');
-                dispatch(removeUser());
-              }}
-            >
-              logout
-            </button>
-          </p>
-
-          <Togglable buttonLabel="new blog" ref={blogFormRef}>
-            <BlogForm togglableRef={blogFormRef} />
-          </Togglable>
-
-          {blogs.map((blog) => (
-            <div className="blog" key={blog.id}>
-              <Blog blog={blog} />
-            </div>
-          ))}
-        </div>
-      )}
+      <Routes>
+        <Route path="/" element={<LoginForm />} />
+        <Route path="/blogs" element={<Blogs />} />
+        <Route path="/blogs/:id" element={<BlogView />} />
+        <Route path="/login" element={<LoginForm />} />
+        <Route path="/users" element={<UsersView />} />
+        <Route path="/users/:id" element={<UserView />} />
+      </Routes>
     </div>
   );
 };

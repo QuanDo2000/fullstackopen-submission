@@ -11,7 +11,7 @@ const blogSlice = createSlice({
         blog.id !== action.payload.id ? blog : action.payload
       );
     },
-    setBlogs: (state, action) => {
+    setBlogs: (_state, action) => {
       return action.payload;
     },
     appendBlog: (state, action) => {
