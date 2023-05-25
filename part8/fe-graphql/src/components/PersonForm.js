@@ -18,12 +18,26 @@ const PersonForm = ({ setError }) => {
         .join('\n');
       setError(messages);
     },
+    update: (cache, res) => {
+      cache.updateQuery({ query: ALL_PERSONS }, ({ allPersons }) => {
+        return {
+          allPersons: allPersons.concat(res.data.addPerson),
+        };
+      });
+    },
   });
 
   const submit = async (event) => {
     event.preventDefault();
 
-    createPerson({ variables: { name, phone, street, city } });
+    createPerson({
+      variables: {
+        name,
+        phone: phone.length > 0 ? phone : undefined,
+        street,
+        city,
+      },
+    });
 
     setName('');
     setPhone('');
