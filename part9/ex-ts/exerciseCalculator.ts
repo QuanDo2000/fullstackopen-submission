@@ -8,7 +8,7 @@ interface Result {
   average: number;
 }
 
-const parseArguments = (args: string[]): number[] => {
+const pargeArgs = (args: string[]): number[] => {
   if (args.length < 4) throw new Error('Not enough arguments');
 
   const target = Number(args[2]);
