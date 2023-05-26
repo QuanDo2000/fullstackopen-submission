@@ -1,0 +1,8 @@
+{
+  "eslint.workingDirectories": [
+    "./part9/patientor-be",
+    "./part9/flights-be",
+    "./part9/fso-ts",
+    "./part9/ex-ts"
+  ]
+}
