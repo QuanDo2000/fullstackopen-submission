@@ -8,20 +8,20 @@ interface Result {
   average: number;
 }
 
-const pargeArgs = (args: string[]): number[] => {
-  if (args.length < 4) throw new Error('Not enough arguments');
+// const parseArgs = (args: string[]): number[] => {
+//   if (args.length < 4) throw new Error('Not enough arguments');
 
-  const target = Number(args[2]);
-  const daily_exercises = args.slice(3).map((d) => Number(d));
+//   const target = Number(args[2]);
+//   const daily_exercises = args.slice(3).map((d) => Number(d));
 
-  if (!isNaN(target) && !daily_exercises.some((d) => isNaN(d))) {
-    return [target, ...daily_exercises];
-  } else {
-    throw new Error('Provided values were not numbers!');
-  }
-};
+//   if (!isNaN(target) && !daily_exercises.some((d) => isNaN(d))) {
+//     return [target, ...daily_exercises];
+//   } else {
+//     throw new Error('Provided values were not numbers!');
+//   }
+// };
 
-const exerciseCalculator = (
+export const exerciseCalculator = (
   daily_exercises: number[],
   target: number
 ): Result => {
@@ -44,13 +44,13 @@ const exerciseCalculator = (
   };
 };
 
-try {
-  const [target, ...daily_exercises] = parseArguments(process.argv);
-  console.log(exerciseCalculator(daily_exercises, target));
-} catch (error: unknown) {
-  let errorMessage = 'Something bad happened.';
-  if (error instanceof Error) {
-    errorMessage += ' Error: ' + error.message;
-  }
-  console.log(errorMessage);
-}
+// try {
+//   const [target, ...daily_exercises] = parseArgs(process.argv);
+//   console.log(exerciseCalculator(daily_exercises, target));
+// } catch (error: unknown) {
+//   let errorMessage = 'Something bad happened.';
+//   if (error instanceof Error) {
+//     errorMessage += ' Error: ' + error.message;
+//   }
+//   console.log(errorMessage);
+// }
